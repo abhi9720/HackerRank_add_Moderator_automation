@@ -80,25 +80,6 @@ async function createContest(tab) {
   await tab.close(); // not know it work, new added
   return contestUrl;
 }
-async function addModerator(tab, contestUrl = null) {
-  if (contestUrl) {
-    await tab.goto(contestUrl, {
-      waitUntil: "networkidle2",
-    });
-  }
-
-  let nav = await tab.click("ul.contest-admin-nav>li:nth-child(4)");
-  await tab.waitForTimeout(5000);
-
-  // if there is multiple moderator  , either pass
-  // array as argument , or use array in global scope
-  for (let i = 0; i < moderatorUserName.length; i++) {
-    await tab.type(".wide", moderatorUserName[i], { delay: 50 });
-    await tab.keyboard.press("Enter");
-  }
-
-  console.log("Work Done");
-}
 
 async function Manage_Moderator(browser, tab) {
   const [button] = await tab.$x("//a[contains(text(), 'Manage Contest')]");
@@ -109,13 +90,12 @@ async function Manage_Moderator(browser, tab) {
       tab.waitForNavigation({ waitUntil: "networkidle2" }),
     ]);
   }
-
+  // getting total number of pages , then iterate all contest of each pages
   await tab.waitForSelector("a[data-attr1='Last']");
   let pageCount = await tab.$eval("a[data-attr1='Last']", (atag) => {
     let toPage = parseInt(atag.getAttribute("data-page"));
     return toPage;
   });
-  console.log("pageCount " + pageCount);
 
   for (let i = 1; i <= pageCount; i++) {
     console.log("page  : " + i);
@@ -128,8 +108,9 @@ async function Manage_Moderator(browser, tab) {
 }
 
 async function handleAllContestOfCurrentPage(browser, tab) {
-  // work as querySelectorAll()
   await tab.waitForSelector("a.block-center");
+
+  // work as querySelectorAll() - get all contest links on curr page
   let links = await tab.$$eval("a.block-center", (aTag) =>
     aTag.map((x) => x.getAttribute("href"))
   );
@@ -145,4 +126,24 @@ async function handleAllContestOfCurrentPage(browser, tab) {
     //then close page
     await page.close();
   }
+}
+
+async function addModerator(tab, contestUrl = null) {
+  if (contestUrl) {
+    await tab.goto(contestUrl, {
+      waitUntil: "networkidle2",
+    });
+  }
+
+  await tab.click("ul.contest-admin-nav>li:nth-child(4)");
+  await tab.waitForTimeout(5000);
+
+  // if there is multiple moderator  , either pass
+  // array as argument , or use array in global scope
+  for (let i = 0; i < moderatorUserName.length; i++) {
+    await tab.type(".wide", moderatorUserName[i], { delay: 50 });
+    await tab.keyboard.press("Enter");
+  }
+
+  console.log("Work Done");
 }
